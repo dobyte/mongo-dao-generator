@@ -1,6 +1,8 @@
 package gen
 
 import (
+	"fmt"
+	"github.com/dobyte/gen-mongo-dao/template"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -15,44 +17,76 @@ const (
 	varModelVariableNameKey    = "VarModelVariableName"    // 模型变量名
 	varModelColumnsDefineKey   = "VarModelColumnsDefine"   // 模型列定义
 	varModelColumnsInstanceKey = "VarModelColumnsInstance" // 模型列实例
+	varModelClassDefineKey     = "VarModelClassDefine"     // 模型类定义
 	varDaoClassNameKey         = "VarDaoClassName"         // dao类名
 	varDaoVariableNameKey      = "VarDaoVariableName"      // dao变量名
 	varDaoPackageNameKey       = "VarDaoPackageName"       // dao包名
 	varDaoPackagePathKey       = "VarDaoPackagePath"       // dao包路径
+	varDaoPrefixNameKey        = "VarDaoPrefixName"        // dao包前缀
 	varCollectionNameKey       = "VarCollectionName"       // 集合名称
 	varAutofillCodeKey         = "VarAutofillCode"         // 自动填充代码
 )
 
-type rule struct {
-	model interface{} // 模型
-	out   string      // 包输出位置
-	pkg   string      // 包前缀
-}
-
 type Generator struct {
-	list   []rule
-	prefix string
+	opts   *Options
+	models []interface{}
 }
 
-func NewGenerator() *Generator {
+type Options struct {
+	OutputDir    string `json:"output_dir"`     // 输出目录
+	OutputPkg    string `json:"output_pkg"`     // 输出包路径
+	EnableSubPkg bool   `json:"enable_sub_pkg"` // 是否启用子包
+	CounterName  string `json:"counter_name"`   // 计数器名称，默认为"Counter"
+}
+
+func NewGenerator(opts *Options) *Generator {
+	if opts.CounterName == "" {
+		opts.CounterName = "Counter"
+	} else {
+		opts.CounterName = toPascalCase(opts.CounterName)
+	}
+
 	return &Generator{
-		list: make([]rule, 0),
+		opts:   opts,
+		models: make([]interface{}, 0),
 	}
 }
 
-// AddModel 添加模型
-func (g *Generator) AddModel(model interface{}, out string, pkg string) {
-	g.list = append(g.list, rule{
-		model: model,
-		out:   out,
-		pkg:   pkg,
-	})
+// AddModels 添加模型
+func (g *Generator) AddModels(models ...interface{}) {
+	g.models = append(g.models, models...)
 }
 
 // MakeDao 批量生成DAO
 func (g *Generator) MakeDao() error {
-	for _, item := range g.list {
-		if err := g.makeDao(item); err != nil {
+	var isMakeCounter bool
+
+	for _, model := range g.models {
+		if model == nil {
+			continue
+		}
+
+		p := newParser(model, g.opts)
+
+		if err := g.makeInternalDao(p); err != nil {
+			return err
+		}
+
+		if err := g.makeExternalDao(p); err != nil {
+			return err
+		}
+
+		if p.makeAutoIncrCode {
+			isMakeCounter = true
+		}
+	}
+
+	if isMakeCounter {
+		if err := g.makeInternalCounterDao(); err != nil {
+			return err
+		}
+
+		if err := g.makeExternalCounterDao(); err != nil {
 			return err
 		}
 	}
@@ -60,33 +94,21 @@ func (g *Generator) MakeDao() error {
 	return nil
 }
 
-// 生成单个DAO
-func (g *Generator) makeDao(rule rule) error {
-	if rule.model == nil {
-		return nil
-	}
-
-	p := newParser(rule.model)
-
-	err := g.makeInternalDao(p, rule.out)
-	if err != nil {
-		return err
-	}
-
-	return g.makeExternalDao(p, rule.out, rule.pkg)
-}
-
 // 生成内部DAO
-func (g *Generator) makeInternalDao(p *parser, out string) error {
-	var (
-		dir      = strings.TrimRight(out, "/") + "/internal/"
-		replaces = make(map[string]string)
-	)
+func (g *Generator) makeInternalDao(p *parser) error {
+	dir := strings.TrimRight(g.opts.OutputDir, "/")
+	if g.opts.EnableSubPkg {
+		dir += fmt.Sprintf("/%s/internal/", p.modelPackageName())
+	} else {
+		dir += "/internal/"
+	}
 
+	replaces := make(map[string]string)
 	replaces[varModelClassNameKey] = p.modelClassName()
 	replaces[varModelPackageNameKey] = p.modelPackageName()
 	replaces[varModelPackagePathKey] = p.modelPackagePath()
 	replaces[varModelVariableNameKey] = p.modelVariableName()
+	replaces[varDaoPrefixNameKey] = p.daoPrefixName()
 	replaces[varDaoClassNameKey] = p.daoClassName()
 	replaces[varDaoVariableNameKey] = p.daoVariableName()
 	replaces[varCollectionNameKey] = p.collectionName()
@@ -95,24 +117,22 @@ func (g *Generator) makeInternalDao(p *parser, out string) error {
 	replaces[varAutofillCodeKey] = p.autofillCode()
 	replaces[varPackagesKey] = p.packages()
 
-	s := os.Expand(InternalTemplate, func(s string) string {
-		return replaces[s]
-	})
-
-	err := os.MkdirAll(dir, os.ModePerm)
-	if err != nil {
-		return err
-	}
-
-	return ioutil.WriteFile(dir+p.fileName(), []byte(strings.TrimLeft(s, "\n")), os.ModePerm)
+	return doWrite(dir+p.fileName(), template.InternalTemplate, replaces)
 }
 
 // 生成外部DAO
-func (g *Generator) makeExternalDao(p *parser, out string, pkg string) error {
+func (g *Generator) makeExternalDao(p *parser) error {
 	var (
-		dir  = strings.TrimRight(out, "/") + "/"
-		file = dir + p.fileName()
+		dir = strings.TrimRight(g.opts.OutputDir, "/")
+		pkg = strings.TrimRight(g.opts.OutputPkg, "/")
 	)
+
+	if g.opts.EnableSubPkg {
+		dir += "/" + p.modelPackageName()
+		pkg += "/" + p.modelPackageName()
+	}
+
+	file := dir + "/" + p.fileName()
 
 	_, err := os.Stat(file)
 	if err != nil {
@@ -130,15 +150,90 @@ func (g *Generator) makeExternalDao(p *parser, out string, pkg string) error {
 
 	replaces := make(map[string]string)
 	replaces[varDaoClassNameKey] = p.daoClassName()
-	replaces[varDaoPackageNameKey] = strings.ReplaceAll(filepath.Base(pkg), "-", "")
+	replaces[varDaoPackageNameKey] = toPackageName(filepath.Base(pkg))
 	replaces[varDaoPackagePathKey] = pkg
 
-	s := os.Expand(ExternalTemplate, func(s string) string {
+	return doWrite(file, template.ExternalTemplate, replaces)
+}
+
+// 生成计数器内部DAO
+func (g *Generator) makeInternalCounterDao() error {
+	dir := strings.TrimRight(g.opts.OutputDir, "/")
+	if g.opts.EnableSubPkg {
+		dir += fmt.Sprintf("/%s/internal/", toKebabCase(g.opts.CounterName))
+	} else {
+		dir += "/internal/"
+	}
+
+	file := dir + "/" + toUnderScoreCase(g.opts.CounterName) + ".go"
+
+	var modelClassDefine string
+	if g.opts.EnableSubPkg {
+		modelClassDefine += "type Model struct {\n"
+	} else {
+		modelClassDefine += fmt.Sprintf("type %sModel struct {\n", toPascalCase(g.opts.CounterName))
+	}
+	modelClassDefine += "\tID    string `bson:\"_id\"`\n"
+	modelClassDefine += "\tValue int64  `bson:\"value\"`\n"
+	modelClassDefine += "}"
+
+	replaces := make(map[string]string)
+	replaces[varDaoClassNameKey] = toPascalCase(g.opts.CounterName)
+	replaces[varDaoVariableNameKey] = toCamelCase(g.opts.CounterName)
+	replaces[varCollectionNameKey] = toUnderScoreCase(g.opts.CounterName)
+	replaces[varModelClassDefineKey] = modelClassDefine
+
+	if !g.opts.EnableSubPkg {
+		replaces[varDaoPrefixNameKey] = toPascalCase(g.opts.CounterName)
+	}
+
+	return doWrite(file, template.CounterInternalTemplate, replaces)
+}
+
+// 生成计数器外部DAO
+func (g *Generator) makeExternalCounterDao() error {
+	var (
+		dir = strings.TrimRight(g.opts.OutputDir, "/")
+		pkg = strings.TrimRight(g.opts.OutputPkg, "/")
+	)
+
+	if g.opts.EnableSubPkg {
+		packageName := toKebabCase(g.opts.CounterName)
+		dir += "/" + packageName
+		pkg += "/" + packageName
+	}
+
+	file := dir + "/" + toUnderScoreCase(g.opts.CounterName) + ".go"
+
+	_, err := os.Stat(file)
+	if err != nil {
+		switch {
+		case os.IsNotExist(err):
+		// ignore
+		case os.IsExist(err):
+			return nil
+		default:
+			return err
+		}
+	} else {
+		return nil
+	}
+
+	replaces := make(map[string]string)
+	replaces[varDaoClassNameKey] = toPascalCase(g.opts.CounterName)
+	replaces[varDaoPackageNameKey] = toPackageName(filepath.Base(pkg))
+	replaces[varDaoPackagePathKey] = pkg
+
+	return doWrite(file, template.CounterExternalTemplate, replaces)
+}
+
+// 写文件
+func doWrite(file string, tpl string, replaces map[string]string) error {
+	s := os.Expand(tpl, func(s string) string {
 		return replaces[s]
 	})
 
-	err = os.MkdirAll(dir, os.ModePerm)
-	if err != nil {
+	if err := os.MkdirAll(filepath.Dir(file), os.ModePerm); err != nil {
 		return err
 	}
 

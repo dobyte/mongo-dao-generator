@@ -12,9 +12,9 @@ import (
 type autofill int
 
 const (
-	objectID      autofill = iota + 1 // primitive.NewObjectID()
-	dateTime                          // primitive.NewDateTimeFromTime(time.Now())
-	autoIncrement                     // auto-increment
+	objectID autofill = iota + 1 // primitive.NewObjectID()
+	dateTime                     // primitive.NewDateTimeFromTime(time.Now())
+	autoIncr                     // auto-increment
 )
 
 const (
@@ -27,24 +27,32 @@ const (
 )
 
 type field struct {
-	name     string   // 字段名
-	column   string   // 列名
-	colName  string   // 列名称
-	colType  string   // 列类型
-	autofill autofill // 列自动填充
+	name              string       // 字段名
+	column            string       // 列名
+	colName           string       // 列名称
+	colType           string       // 列类型
+	autoFill          autofill     // 列自动填充类型
+	autoIncrFieldName string       // 自增字段名
+	autoIncrFieldKind reflect.Kind // 自增字段类型
 }
 
 type parser struct {
-	rv              reflect.Value
-	rt              reflect.Type
-	rk              reflect.Kind
-	fields          []field
-	fieldNameMaxLen int
-	imports         map[string]struct{}
+	rv               reflect.Value
+	rt               reflect.Type
+	rk               reflect.Kind
+	fields           []field
+	fieldNameMaxLen  int
+	imports          map[string]struct{}
+	makeAutoIncrCode bool
+	opts             *Options
 }
 
-func newParser(model interface{}) *parser {
-	p := &parser{fields: make([]field, 0), imports: make(map[string]struct{})}
+func newParser(model interface{}, opts *Options) *parser {
+	p := &parser{
+		fields:  make([]field, 0),
+		imports: make(map[string]struct{}),
+		opts:    opts,
+	}
 	p.parse(model)
 	return p
 }
@@ -88,29 +96,32 @@ func (p *parser) parse(model interface{}) {
 				case "autoFill":
 					switch fv.Interface().(type) {
 					case primitive.ObjectID:
-						f.autofill = objectID
+						f.autoFill = objectID
 						p.imports[pkg3] = struct{}{}
 					case primitive.DateTime:
-						f.autofill = dateTime
+						f.autoFill = dateTime
 						p.imports[pkg1] = struct{}{}
 						p.imports[pkg3] = struct{}{}
-					default:
-						switch fk {
-						case reflect.Int,
-							reflect.Int8,
-							reflect.Int16,
-							reflect.Int32,
-							reflect.Int64,
-							reflect.Uint,
-							reflect.Uint8,
-							reflect.Uint16,
-							reflect.Uint32,
-							reflect.Uint64:
-							f.autofill = autoIncrement
-						}
+					}
+				case "autoIncr":
+					if len(elements) != 2 || elements[1] == "" {
+						continue
+					}
+
+					switch fk {
+					case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+						f.autoFill = autoIncr
+						f.autoIncrFieldName = elements[1]
+						f.autoIncrFieldKind = fk
+						p.makeAutoIncrCode = true
 					}
 				}
 			}
+		}
+
+		if p.makeAutoIncrCode && p.opts.EnableSubPkg {
+			pkg := fmt.Sprintf("%s/%s", strings.TrimRight(p.opts.OutputPkg, "/"), toKebabCase(p.opts.CounterName))
+			p.imports[pkg] = struct{}{}
 		}
 
 		switch fk {
@@ -128,12 +139,12 @@ func (p *parser) parse(model interface{}) {
 
 // 获取模型类名
 func (p *parser) modelClassName() string {
-	return toFirstUpper(p.rt.Name())
+	return toPascalCase(p.rt.Name())
 }
 
 // 获取模型变量名
 func (p *parser) modelVariableName() string {
-	return toFirstLower(p.rt.Name())
+	return toCamelCase(p.rt.Name())
 }
 
 // 获取模型包名称
@@ -147,19 +158,23 @@ func (p *parser) modelPackagePath() string {
 	return p.rt.PkgPath()
 }
 
-// 获取前缀名称
-func (p *parser) prefixName() string {
-	return toFirstLower(p.rt.Name())
+// 获取DAO前缀名
+func (p *parser) daoPrefixName() string {
+	if p.opts.EnableSubPkg {
+		return ""
+	} else {
+		return toPascalCase(p.rt.Name())
+	}
 }
 
 // 获取DAO类名称
 func (p *parser) daoClassName() string {
-	return toFirstUpper(p.rt.Name())
+	return toPascalCase(p.rt.Name())
 }
 
 // 获取DAO的变量名
 func (p *parser) daoVariableName() string {
-	return toFirstLower(p.rt.Name())
+	return toCamelCase(p.rt.Name())
 }
 
 // 获取集合名称
@@ -226,8 +241,13 @@ func (p *parser) modelColumnsInstance() (str string) {
 
 // 自动填充代码
 func (p *parser) autofillCode() (str string) {
+	var counterPkgPrefix string
+	if p.opts.EnableSubPkg {
+		counterPkgPrefix = fmt.Sprintf("%s.", toPackageName(p.opts.CounterName))
+	}
+
 	for _, f := range p.fields {
-		if f.autofill == 0 {
+		if f.autoFill == 0 {
 			continue
 		}
 
@@ -235,7 +255,7 @@ func (p *parser) autofillCode() (str string) {
 			str += "\n\n"
 		}
 
-		switch f.autofill {
+		switch f.autoFill {
 		case objectID:
 			str += fmt.Sprintf("\tif model.%s.IsZero() {\n", f.name)
 			str += fmt.Sprintf("\t\tmodel.%s = primitive.NewObjectID()\n", f.name)
@@ -244,8 +264,37 @@ func (p *parser) autofillCode() (str string) {
 			str += fmt.Sprintf("\tif model.%s == 0 {\n", f.name)
 			str += fmt.Sprintf("\t\tmodel.%s = primitive.NewDateTimeFromTime(time.Now())\n", f.name)
 			str += "\t}"
-		case autoIncrement:
+		case autoIncr:
+			str += fmt.Sprintf("\tif model.%s == 0 {\n", f.name)
+			str += fmt.Sprintf("\t\tif id, err := %sNew%s(dao.Database).Incr(ctx, \"%s\"); err != nil {\n", counterPkgPrefix, p.opts.CounterName, f.autoIncrFieldName)
+			str += "\t\t\treturn err\n"
+			str += "\t\t} else {\n"
 
+			switch f.autoIncrFieldKind {
+			case reflect.Int:
+				str += fmt.Sprintf("\t\t\tmodel.%s = int(id)\n", f.name)
+			case reflect.Int8:
+				str += fmt.Sprintf("\t\t\tmodel.%s = int8(id)\n", f.name)
+			case reflect.Int16:
+				str += fmt.Sprintf("\t\t\tmodel.%s = int16(id)\n", f.name)
+			case reflect.Int32:
+				str += fmt.Sprintf("\t\t\tmodel.%s = int32(id)\n", f.name)
+			case reflect.Int64:
+				str += fmt.Sprintf("\t\t\tmodel.%s = id\n", f.name)
+			case reflect.Uint:
+				str += fmt.Sprintf("\t\t\tmodel.%s = uint(id)\n", f.name)
+			case reflect.Uint8:
+				str += fmt.Sprintf("\t\t\tmodel.%s = uint8(id)\n", f.name)
+			case reflect.Uint16:
+				str += fmt.Sprintf("\t\t\tmodel.%s = uint16(id)\n", f.name)
+			case reflect.Uint32:
+				str += fmt.Sprintf("\t\t\tmodel.%s = uint32(id)\n", f.name)
+			case reflect.Uint64:
+				str += fmt.Sprintf("\t\t\tmodel.%s = uint64(id)\n", f.name)
+			}
+
+			str += "\t\t}\n"
+			str += "\t}"
 		}
 	}
 
@@ -259,7 +308,58 @@ func (p *parser) autofillCode() (str string) {
 	return
 }
 
+// 下划线命名
 func toUnderScoreCase(s string) string {
+	return toLowerCase(s, 95)
+}
+
+// 短横线命名
+func toKebabCase(s string) string {
+	return toLowerCase(s, 45)
+}
+
+// 小驼峰命名
+func toCamelCase(s string) string {
+	chars := make([]rune, 0, len(s))
+	upper := false
+	first := true
+
+	for i := 0; i < len(s); i++ {
+		switch {
+		case s[i] >= 65 && s[i] <= 90:
+			if first {
+				chars = append(chars, rune(s[i]+32))
+			} else {
+				chars = append(chars, rune(s[i]))
+			}
+			first = false
+			upper = false
+		case s[i] >= 97 && s[i] <= 122:
+			if upper && !first {
+				chars = append(chars, rune(s[i]-32))
+			} else {
+				chars = append(chars, rune(s[i]))
+			}
+			first = false
+			upper = false
+		case s[i] == 45:
+			upper = true
+		case s[i] == 95:
+			upper = true
+		}
+	}
+
+	return string(chars)
+}
+
+// 大驼峰命名
+func toPascalCase(s string) string {
+	s = toCamelCase(s)
+	return strings.ToUpper(string(s[0])) + s[1:]
+}
+
+// 转小写
+func toLowerCase(s string, c rune) string {
 	chars := make([]rune, 0)
 
 	for i := 0; i < len(s); i++ {
@@ -267,7 +367,7 @@ func toUnderScoreCase(s string) string {
 			if i == 0 {
 				chars = append(chars, rune(s[i]+32))
 			} else {
-				chars = append(chars, 95, rune(s[i]+32))
+				chars = append(chars, c, rune(s[i]+32))
 			}
 		} else {
 			chars = append(chars, rune(s[i]))
@@ -277,10 +377,17 @@ func toUnderScoreCase(s string) string {
 	return string(chars)
 }
 
-func toFirstLower(s string) string {
-	return strings.ToLower(string(s[0])) + s[1:]
-}
+// 转包名
+func toPackageName(s string) string {
+	chars := make([]rune, 0, len(s))
+	for i := 0; i < len(s); i++ {
+		switch {
+		case s[i] >= 65 && s[i] <= 90:
+			chars = append(chars, rune(s[i]+32))
+		case s[i] >= 97 && s[i] <= 122:
+			chars = append(chars, rune(s[i]))
+		}
+	}
 
-func toFirstUpper(s string) string {
-	return strings.ToUpper(string(s[0])) + s[1:]
+	return string(chars)
 }

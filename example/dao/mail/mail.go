@@ -1,7 +1,7 @@
-package dao
+package mail
 
 import (
-	"example/dao/internal"
+	"example/dao/mail/internal"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
