@@ -5,6 +5,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+type Columns = internal.Columns
+
 type Mail struct {
 	*internal.Mail
 }

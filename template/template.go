@@ -8,6 +8,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+type ${VarDaoPrefixName}Columns = internal.${VarDaoPrefixName}Columns
+
 type ${VarDaoClassName} struct {
 	*internal.${VarDaoClassName}
 }

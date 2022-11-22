@@ -124,11 +124,6 @@ func (p *parser) parse(model interface{}) {
 			p.imports[pkg] = struct{}{}
 		}
 
-		switch fk {
-		case reflect.Array, reflect.Map, reflect.Slice, reflect.Struct:
-
-		}
-
 		if l := len(f.name); l > p.fieldNameMaxLen {
 			p.fieldNameMaxLen = l
 		}
