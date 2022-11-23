@@ -24,6 +24,7 @@ const (
 	pkg4 = "go.mongodb.org/mongo-driver/mongo"
 	pkg5 = "go.mongodb.org/mongo-driver/mongo/options"
 	pkg6 = "errors"
+	pkg7 = "go.mongodb.org/mongo-driver/bson"
 )
 
 type field struct {
@@ -188,6 +189,7 @@ func (p *parser) packages() (str string) {
 	p.imports[pkg4] = struct{}{}
 	p.imports[pkg5] = struct{}{}
 	p.imports[pkg6] = struct{}{}
+	p.imports[pkg7] = struct{}{}
 	p.imports[p.modelPackagePath()] = struct{}{}
 
 	packages := make([]string, 0, len(p.imports))
