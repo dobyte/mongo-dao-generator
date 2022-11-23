@@ -121,6 +121,18 @@ func (dao *${VarDaoClassName}) UpdateOne(ctx context.Context, filterFunc ${VarDa
 	return dao.Collection.UpdateOne(ctx, filter, update, opts)
 }
 
+// UpdateOneByID executes an update command to update at most one document in the collection.
+func (dao *${VarDaoClassName}) UpdateOneByID(ctx context.Context, id string, updateFunc ${VarDaoPrefixName}UpdateFunc, optionsFunc ...${VarDaoPrefixName}UpdateOptionsFunc) (*mongo.UpdateResult, error) {
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return dao.UpdateOne(ctx, func(cols *Columns) interface{} {
+		return bson.M{"_id": objectID}
+	}, updateFunc, optionsFunc...)
+}
+
 // UpdateMany executes an update command to update documents in the collection.
 func (dao *${VarDaoClassName}) UpdateMany(ctx context.Context, filterFunc ${VarDaoPrefixName}FilterFunc, updateFunc ${VarDaoPrefixName}UpdateFunc, optionsFunc ...${VarDaoPrefixName}UpdateOptionsFunc) (*mongo.UpdateResult, error) {
 	var (
@@ -157,6 +169,18 @@ func (dao *${VarDaoClassName}) FindOne(ctx context.Context, filterFunc ${VarDaoP
 	}
 
 	return model, nil
+}
+
+// FindOneByID executes a find command and returns a model for one document in the collection.
+func (dao *${VarDaoClassName}) FindOneByID(ctx context.Context, id string, optionsFunc ...${VarDaoPrefixName}FindOneOptionsFunc) (*${VarModelPackageName}.${VarModelClassName}, error) {
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return dao.FindOne(ctx, func(cols *Columns) interface{} {
+		return bson.M{"_id": objectID}
+	}, optionsFunc...)
 }
 
 // FindMany executes a find command and returns many models the matching documents in the collection.
@@ -196,6 +220,18 @@ func (dao *${VarDaoClassName}) DeleteOne(ctx context.Context, filterFunc ${VarDa
 	}
 
 	return dao.Collection.DeleteOne(ctx, filter, opts)
+}
+
+// DeleteOneByID executes a delete command to delete at most one document from the collection.
+func (dao *${VarDaoClassName}) DeleteOneByID(ctx context.Context, id string, optionsFunc ...${VarDaoPrefixName}DeleteOptionsFunc) (*mongo.DeleteResult, error) {
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return dao.DeleteOne(ctx, func(cols *Columns) interface{} {
+		return bson.M{"_id": objectID}
+	}, optionsFunc...)
 }
 
 // DeleteMany executes a delete command to delete documents from the collection.

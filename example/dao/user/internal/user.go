@@ -146,6 +146,18 @@ func (dao *User) UpdateOne(ctx context.Context, filterFunc FilterFunc, updateFun
 	return dao.Collection.UpdateOne(ctx, filter, update, opts)
 }
 
+// UpdateOneByID executes an update command to update at most one document in the collection.
+func (dao *User) UpdateOneByID(ctx context.Context, id string, updateFunc UpdateFunc, optionsFunc ...UpdateOptionsFunc) (*mongo.UpdateResult, error) {
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return dao.UpdateOne(ctx, func(cols *Columns) interface{} {
+		return bson.M{"_id": objectID}
+	}, updateFunc, optionsFunc...)
+}
+
 // UpdateMany executes an update command to update documents in the collection.
 func (dao *User) UpdateMany(ctx context.Context, filterFunc FilterFunc, updateFunc UpdateFunc, optionsFunc ...UpdateOptionsFunc) (*mongo.UpdateResult, error) {
 	var (
@@ -182,6 +194,18 @@ func (dao *User) FindOne(ctx context.Context, filterFunc FilterFunc, optionsFunc
 	}
 
 	return model, nil
+}
+
+// FindOneByID executes a find command and returns a model for one document in the collection.
+func (dao *User) FindOneByID(ctx context.Context, id string, optionsFunc ...FindOneOptionsFunc) (*user.User, error) {
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return dao.FindOne(ctx, func(cols *Columns) interface{} {
+		return bson.M{"_id": objectID}
+	}, optionsFunc...)
 }
 
 // FindMany executes a find command and returns many models the matching documents in the collection.
@@ -221,6 +245,18 @@ func (dao *User) DeleteOne(ctx context.Context, filterFunc FilterFunc, optionsFu
 	}
 
 	return dao.Collection.DeleteOne(ctx, filter, opts)
+}
+
+// DeleteOneByID executes a delete command to delete at most one document from the collection.
+func (dao *User) DeleteOneByID(ctx context.Context, id string, optionsFunc ...DeleteOptionsFunc) (*mongo.DeleteResult, error) {
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return dao.DeleteOne(ctx, func(cols *Columns) interface{} {
+		return bson.M{"_id": objectID}
+	}, optionsFunc...)
 }
 
 // DeleteMany executes a delete command to delete documents from the collection.
