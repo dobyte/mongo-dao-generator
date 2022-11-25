@@ -61,7 +61,7 @@ func (dao *Counter) Incr(ctx context.Context, key string, incr ...int) (int64, e
 
 	rst := dao.Collection.FindOneAndUpdate(ctx, bson.M{
 		dao.Columns.ID: key,
-	}, bson.M{"": bson.M{
+	}, bson.M{"$inc": bson.M{
 		dao.Columns.Value: value,
 	}}, &options.FindOneAndUpdateOptions{
 		Upsert:         &upsert,

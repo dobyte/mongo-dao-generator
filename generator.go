@@ -230,7 +230,11 @@ func (g *Generator) makeExternalCounterDao() error {
 // 写文件
 func doWrite(file string, tpl string, replaces map[string]string) error {
 	s := os.Expand(tpl, func(s string) string {
-		return replaces[s]
+		if s[:3] == "Var" {
+			return replaces[s]
+		} else {
+			return "$" + s
+		}
 	})
 
 	if err := os.MkdirAll(filepath.Dir(file), os.ModePerm); err != nil {
