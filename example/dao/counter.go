@@ -1,7 +1,7 @@
-package counter
+package dao
 
 import (
-	"example/dao/counter/internal"
+	"example/dao/internal"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 

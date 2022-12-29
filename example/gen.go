@@ -11,7 +11,7 @@ func main() {
 	g := gen.NewGenerator(&gen.Options{
 		OutputDir:    "./dao",
 		OutputPkg:    "example/dao",
-		EnableSubPkg: true,
+		EnableSubPkg: false,
 	})
 
 	g.AddModels(

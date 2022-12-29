@@ -150,6 +150,7 @@ func (g *Generator) makeExternalDao(p *parser) error {
 
 	replaces := make(map[string]string)
 	replaces[varDaoClassNameKey] = p.daoClassName()
+    replaces[varDaoPrefixNameKey] = p.daoPrefixName()
 	replaces[varDaoPackageNameKey] = toPackageName(filepath.Base(pkg))
 	replaces[varDaoPackagePathKey] = pkg
 

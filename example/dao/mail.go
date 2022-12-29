@@ -1,11 +1,11 @@
-package mail
+package dao
 
 import (
-	"example/dao/mail/internal"
+	"example/dao/internal"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type Columns = internal.Columns
+type MailColumns = internal.MailColumns
 
 type Mail struct {
 	*internal.Mail

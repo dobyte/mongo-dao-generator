@@ -128,7 +128,7 @@ func (dao *${VarDaoClassName}) UpdateOneByID(ctx context.Context, id string, upd
 		return nil, err
 	}
 
-	return dao.UpdateOne(ctx, func(cols *Columns) interface{} {
+    return dao.UpdateOne(ctx, func(cols *${VarDaoPrefixName}Columns) interface{} {
 		return bson.M{"_id": objectID}
 	}, updateFunc, optionsFunc...)
 }
@@ -178,7 +178,7 @@ func (dao *${VarDaoClassName}) FindOneByID(ctx context.Context, id string, optio
 		return nil, err
 	}
 
-	return dao.FindOne(ctx, func(cols *Columns) interface{} {
+    return dao.FindOne(ctx, func(cols *${VarDaoPrefixName}Columns) interface{} {
 		return bson.M{"_id": objectID}
 	}, optionsFunc...)
 }
@@ -229,7 +229,7 @@ func (dao *${VarDaoClassName}) DeleteOneByID(ctx context.Context, id string, opt
 		return nil, err
 	}
 
-	return dao.DeleteOne(ctx, func(cols *Columns) interface{} {
+    return dao.DeleteOne(ctx, func(cols *${VarDaoPrefixName}Columns) interface{} {
 		return bson.M{"_id": objectID}
 	}, optionsFunc...)
 }

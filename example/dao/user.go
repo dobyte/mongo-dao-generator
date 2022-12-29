@@ -1,11 +1,11 @@
-package user
+package dao
 
 import (
-	"example/dao/user/internal"
+	"example/dao/internal"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type Columns = internal.Columns
+type UserColumns = internal.UserColumns
 
 type User struct {
 	*internal.User
