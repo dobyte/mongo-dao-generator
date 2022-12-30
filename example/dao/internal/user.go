@@ -19,6 +19,9 @@ import (
 
 type UserFilterFunc func(cols *UserColumns) interface{}
 type UserUpdateFunc func(cols *UserColumns) interface{}
+type UserPipelineFunc func(cols *UserColumns) interface{}
+type UserCountOptionsFunc func(cols *UserColumns) *options.CountOptions
+type UserAggregateOptionsFunc func(cols *UserColumns) *options.AggregateOptions
 type UserFindOneOptionsFunc func(cols *UserColumns) *options.FindOneOptions
 type UserFindManyOptionsFunc func(cols *UserColumns) *options.FindOptions
 type UserUpdateOptionsFunc func(cols *UserColumns) *options.UpdateOptions
@@ -86,6 +89,34 @@ func NewUser(db *mongo.Database) *User {
 		Database:   db,
 		Collection: db.Collection("user"),
 	}
+}
+
+// Count returns the number of documents in the collection.
+func (dao *User) Count(ctx context.Context, filterFunc UserFilterFunc, optionsFunc ...UserCountOptionsFunc) (int64, error) {
+    var (
+        opts   *options.CountOptions
+        filter = filterFunc(dao.Columns)
+    )
+
+    if len(optionsFunc) > 0 {
+        opts = optionsFunc[0](dao.Columns)
+    }
+
+    return dao.Collection.CountDocuments(ctx, filter, opts)
+}
+
+// Aggregate executes an aggregate command against the collection and returns a cursor over the resulting documents.
+func (dao *User) Aggregate(ctx context.Context, pipelineFunc UserPipelineFunc, optionsFunc ...UserAggregateOptionsFunc) (*mongo.Cursor, error) {
+    var (
+        opts     *options.AggregateOptions
+        pipeline = pipelineFunc(dao.Columns)
+    )
+
+    if len(optionsFunc) > 0 {
+        opts = optionsFunc[0](dao.Columns)
+    }
+
+    return dao.Collection.Aggregate(ctx, pipeline, opts)
 }
 
 // InsertOne executes an insert command to insert a single document into the collection.

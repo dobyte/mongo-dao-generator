@@ -34,6 +34,9 @@ import (
 
 type ${VarDaoPrefixName}FilterFunc func(cols *${VarDaoPrefixName}Columns) interface{}
 type ${VarDaoPrefixName}UpdateFunc func(cols *${VarDaoPrefixName}Columns) interface{}
+type ${VarDaoPrefixName}PipelineFunc func(cols *${VarDaoPrefixName}Columns) interface{}
+type ${VarDaoPrefixName}CountOptionsFunc func(cols *${VarDaoPrefixName}Columns) *options.CountOptions
+type ${VarDaoPrefixName}AggregateOptionsFunc func(cols *${VarDaoPrefixName}Columns) *options.AggregateOptions
 type ${VarDaoPrefixName}FindOneOptionsFunc func(cols *${VarDaoPrefixName}Columns) *options.FindOneOptions
 type ${VarDaoPrefixName}FindManyOptionsFunc func(cols *${VarDaoPrefixName}Columns) *options.FindOptions
 type ${VarDaoPrefixName}UpdateOptionsFunc func(cols *${VarDaoPrefixName}Columns) *options.UpdateOptions
@@ -61,6 +64,34 @@ func New${VarDaoClassName}(db *mongo.Database) *${VarDaoClassName} {
 		Database:   db,
 		Collection: db.Collection("${VarCollectionName}"),
 	}
+}
+
+// Count returns the number of documents in the collection.
+func (dao *${VarDaoClassName}) Count(ctx context.Context, filterFunc ${VarDaoPrefixName}FilterFunc, optionsFunc ...${VarDaoPrefixName}CountOptionsFunc) (int64, error) {
+    var (
+        opts   *options.CountOptions
+        filter = filterFunc(dao.Columns)
+    )
+
+    if len(optionsFunc) > 0 {
+        opts = optionsFunc[0](dao.Columns)
+    }
+
+    return dao.Collection.CountDocuments(ctx, filter, opts)
+}
+
+// Aggregate executes an aggregate command against the collection and returns a cursor over the resulting documents.
+func (dao *${VarDaoClassName}) Aggregate(ctx context.Context, pipelineFunc ${VarDaoPrefixName}PipelineFunc, optionsFunc ...${VarDaoPrefixName}AggregateOptionsFunc) (*mongo.Cursor, error) {
+    var (
+        opts     *options.AggregateOptions
+        pipeline = pipelineFunc(dao.Columns)
+    )
+
+    if len(optionsFunc) > 0 {
+        opts = optionsFunc[0](dao.Columns)
+    }
+
+    return dao.Collection.Aggregate(ctx, pipeline, opts)
 }
 
 // InsertOne executes an insert command to insert a single document into the collection.

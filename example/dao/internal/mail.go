@@ -19,6 +19,9 @@ import (
 
 type MailFilterFunc func(cols *MailColumns) interface{}
 type MailUpdateFunc func(cols *MailColumns) interface{}
+type MailPipelineFunc func(cols *MailColumns) interface{}
+type MailCountOptionsFunc func(cols *MailColumns) *options.CountOptions
+type MailAggregateOptionsFunc func(cols *MailColumns) *options.AggregateOptions
 type MailFindOneOptionsFunc func(cols *MailColumns) *options.FindOneOptions
 type MailFindManyOptionsFunc func(cols *MailColumns) *options.FindOptions
 type MailUpdateOptionsFunc func(cols *MailColumns) *options.UpdateOptions
@@ -60,6 +63,34 @@ func NewMail(db *mongo.Database) *Mail {
 		Database:   db,
 		Collection: db.Collection("mail"),
 	}
+}
+
+// Count returns the number of documents in the collection.
+func (dao *Mail) Count(ctx context.Context, filterFunc MailFilterFunc, optionsFunc ...MailCountOptionsFunc) (int64, error) {
+    var (
+        opts   *options.CountOptions
+        filter = filterFunc(dao.Columns)
+    )
+
+    if len(optionsFunc) > 0 {
+        opts = optionsFunc[0](dao.Columns)
+    }
+
+    return dao.Collection.CountDocuments(ctx, filter, opts)
+}
+
+// Aggregate executes an aggregate command against the collection and returns a cursor over the resulting documents.
+func (dao *Mail) Aggregate(ctx context.Context, pipelineFunc MailPipelineFunc, optionsFunc ...MailAggregateOptionsFunc) (*mongo.Cursor, error) {
+    var (
+        opts     *options.AggregateOptions
+        pipeline = pipelineFunc(dao.Columns)
+    )
+
+    if len(optionsFunc) > 0 {
+        opts = optionsFunc[0](dao.Columns)
+    }
+
+    return dao.Collection.Aggregate(ctx, pipeline, opts)
 }
 
 // InsertOne executes an insert command to insert a single document into the collection.
