@@ -1,7 +1,7 @@
 package dao
 
 import (
-	"example/dao/internal"
+	"github.com/dobyte/mongo-dao-generator/example/dao/internal"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
