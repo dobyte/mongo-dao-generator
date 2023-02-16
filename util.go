@@ -11,24 +11,24 @@ import (
 type style string
 
 const (
-	kebabCase      style = "kebab"       // 短横线命名
-	underScoreCase style = "under-score" // 下划线命名
-	camelCase      style = "camel"       // 小驼峰命名
-	pascalCase     style = "pascal"      // 大驼峰命名
-	lowerCase      style = "lower"       // 小写命名
+	kebabCase      style = "kebab"
+	underscoreCase style = "underscore"
+	camelCase      style = "camel"
+	pascalCase     style = "pascal"
+	lowerCase      style = "lower"
 )
 
-// 下划线命名
-func toUnderScoreCase(s string) string {
+// convert to underscore style, example: UserProfile > user_profile
+func toUnderscoreCase(s string) string {
 	return toLowerCase(s, 95)
 }
 
-// 短横线命名
+// convert to kebab style, example: UserProfile > user-profile
 func toKebabCase(s string) string {
 	return toLowerCase(s, 45)
 }
 
-// 小驼峰命名
+// convert to camel style, example: user-profile > userProfile
 func toCamelCase(s string) string {
 	chars := make([]rune, 0, len(s))
 	upper := false
@@ -62,13 +62,12 @@ func toCamelCase(s string) string {
 	return string(chars)
 }
 
-// 大驼峰命名
+// convert to pascal style, example: user-profile > UserProfile
 func toPascalCase(s string) string {
 	s = toCamelCase(s)
 	return strings.ToUpper(string(s[0])) + s[1:]
 }
 
-// 转小写
 func toLowerCase(s string, c rune) string {
 	chars := make([]rune, 0)
 
@@ -87,7 +86,6 @@ func toLowerCase(s string, c rune) string {
 	return string(chars)
 }
 
-// 转包名
 func toPackageName(s string) string {
 	chars := make([]rune, 0, len(s))
 	for i := 0; i < len(s); i++ {
@@ -102,13 +100,12 @@ func toPackageName(s string) string {
 	return string(chars)
 }
 
-// 转包路径
 func toPackagePath(s string, style style) string {
 	switch style {
 	case kebabCase:
 		return toKebabCase(s)
-	case underScoreCase:
-		return toUnderScoreCase(s)
+	case underscoreCase:
+		return toUnderscoreCase(s)
 	case camelCase:
 		return toCamelCase(s)
 	case pascalCase:
@@ -120,13 +117,12 @@ func toPackagePath(s string, style style) string {
 	}
 }
 
-// 转文件名
 func toFileName(s string, style style) string {
 	switch style {
 	case kebabCase:
 		return toKebabCase(s)
-	case underScoreCase:
-		return toUnderScoreCase(s)
+	case underscoreCase:
+		return toUnderscoreCase(s)
 	case camelCase:
 		return toCamelCase(s)
 	case pascalCase:
@@ -134,11 +130,10 @@ func toFileName(s string, style style) string {
 	case lowerCase:
 		return toPackageName(s)
 	default:
-        return toUnderScoreCase(s)
+        return toUnderscoreCase(s)
 	}
 }
 
-// 写文件
 func doWrite(file string, tpl string, replaces map[string]string) error {
 	s := os.Expand(tpl, func(s string) string {
 		switch {

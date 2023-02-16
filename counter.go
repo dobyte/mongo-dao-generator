@@ -8,15 +8,15 @@ import (
 
 type counter struct {
 	opts            *options
-	modelName       string // 模型名称
-	daoClassName    string // DAO类名称
-	daoVariableName string // DAO变量名
-	daoPkgPath      string // DAO包路径
-	daoPkgName      string // DAO包名称
-	daoOutputDir    string // DAO文件输出目录
-	daoOutputFile   string // DAO文件输出名
-	daoPrefixName   string // DAO前缀名
-	collectionName  string // 数据库集合名
+	modelName       string
+	daoClassName    string
+	daoVariableName string
+	daoPkgPath      string
+	daoPkgName      string
+	daoOutputDir    string
+	daoOutputFile   string
+	daoPrefixName   string
+	collectionName  string
 }
 
 func newCounter(opts *options) *counter {
@@ -26,7 +26,7 @@ func newCounter(opts *options) *counter {
 	c.daoClassName = toPascalCase(c.modelName)
 	c.daoVariableName = toCamelCase(c.modelName)
 	c.daoOutputFile = fmt.Sprintf("%s.go", toFileName(c.modelName, c.opts.fileNameStyle))
-	c.collectionName = toUnderScoreCase(c.modelName)
+	c.collectionName = toUnderscoreCase(c.modelName)
 
 	dir := strings.TrimSuffix(opts.daoDir, "/")
 

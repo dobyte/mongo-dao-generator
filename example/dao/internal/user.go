@@ -9,7 +9,7 @@ package internal
 import (
 	"context"
 	"errors"
-	"github.com/dobyte/mongo-dao-generator/example/model/user"
+	models "github.com/dobyte/mongo-dao-generator/example/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -120,7 +120,7 @@ func (dao *User) Aggregate(ctx context.Context, pipelineFunc UserPipelineFunc, o
 }
 
 // InsertOne executes an insert command to insert a single document into the collection.
-func (dao *User) InsertOne(ctx context.Context, model *user.User, optionsFunc ...UserInsertOneOptionsFunc) (*mongo.InsertOneResult, error) {
+func (dao *User) InsertOne(ctx context.Context, model *models.User, optionsFunc ...UserInsertOneOptionsFunc) (*mongo.InsertOneResult, error) {
 	if model == nil {
 		return nil, errors.New("model is nil")
 	}
@@ -139,7 +139,7 @@ func (dao *User) InsertOne(ctx context.Context, model *user.User, optionsFunc ..
 }
 
 // InsertMany executes an insert command to insert multiple documents into the collection.
-func (dao *User) InsertMany(ctx context.Context, models []*user.User, optionsFunc ...UserInsertManyOptionsFunc) (*mongo.InsertManyResult, error) {
+func (dao *User) InsertMany(ctx context.Context, models []*models.User, optionsFunc ...UserInsertManyOptionsFunc) (*mongo.InsertManyResult, error) {
 	if len(models) == 0 {
 		return nil, errors.New("models is empty")
 	}
@@ -205,10 +205,10 @@ func (dao *User) UpdateMany(ctx context.Context, filterFunc UserFilterFunc, upda
 }
 
 // FindOne executes a find command and returns a model for one document in the collection.
-func (dao *User) FindOne(ctx context.Context, filterFunc UserFilterFunc, optionsFunc ...UserFindOneOptionsFunc) (*user.User, error) {
+func (dao *User) FindOne(ctx context.Context, filterFunc UserFilterFunc, optionsFunc ...UserFindOneOptionsFunc) (*models.User, error) {
 	var (
 		opts   *options.FindOneOptions
-		model  = &user.User{}
+		model  = &models.User{}
 		filter = filterFunc(dao.Columns)
 	)
 
@@ -228,7 +228,7 @@ func (dao *User) FindOne(ctx context.Context, filterFunc UserFilterFunc, options
 }
 
 // FindOneByID executes a find command and returns a model for one document in the collection.
-func (dao *User) FindOneByID(ctx context.Context, id string, optionsFunc ...UserFindOneOptionsFunc) (*user.User, error) {
+func (dao *User) FindOneByID(ctx context.Context, id string, optionsFunc ...UserFindOneOptionsFunc) (*models.User, error) {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -240,7 +240,7 @@ func (dao *User) FindOneByID(ctx context.Context, id string, optionsFunc ...User
 }
 
 // FindMany executes a find command and returns many models the matching documents in the collection.
-func (dao *User) FindMany(ctx context.Context, filterFunc UserFilterFunc, optionsFunc ...UserFindManyOptionsFunc) ([]*user.User, error) {
+func (dao *User) FindMany(ctx context.Context, filterFunc UserFilterFunc, optionsFunc ...UserFindManyOptionsFunc) ([]*models.User, error) {
 	var (
 		opts   *options.FindOptions
 		filter = filterFunc(dao.Columns)
@@ -255,7 +255,7 @@ func (dao *User) FindMany(ctx context.Context, filterFunc UserFilterFunc, option
 		return nil, err
 	}
 
-	models := make([]*user.User, 0)
+	models := make([]*models.User, 0)
 	
 	if err = cur.All(ctx, &models); err != nil {
 		return nil, err
@@ -305,7 +305,7 @@ func (dao *User) DeleteMany(ctx context.Context, filterFunc UserFilterFunc, opti
 }
 
 // autofill when inserting data
-func (dao *User) autofill(ctx context.Context, model *user.User) error {
+func (dao *User) autofill(ctx context.Context, model *models.User) error {
 	if model.ID.IsZero() {
 		model.ID = primitive.NewObjectID()
 	}

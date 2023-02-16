@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-    "github.com/dobyte/mongo-dao-generator/template"
+	"github.com/dobyte/mongo-dao-generator/template"
 	"go/ast"
 	"go/token"
 	"golang.org/x/tools/go/packages"
@@ -14,43 +14,43 @@ import (
 )
 
 const (
-	symbolBacktick = "`" // 反引号
+	symbolBacktick = "`"
 )
 
 const (
-	symbolBacktickKey = "SymbolBacktick" // 反引号
+	symbolBacktickKey = "SymbolBacktick"
 )
 
 const (
-	varPackagesKey             = "VarPackages"             // 导入的包
-	varModelClassNameKey       = "VarModelClassName"       // 模型类名
-	varModelPackageNameKey     = "VarModelPackageName"     // 模型包名
-	varModelPackagePathKey     = "VarModelPackagePath"     // 模型包路径
-	varModelVariableNameKey    = "VarModelVariableName"    // 模型变量名
-	varModelColumnsDefineKey   = "VarModelColumnsDefine"   // 模型列定义
-	varModelColumnsInstanceKey = "VarModelColumnsInstance" // 模型列实例
-	varDaoClassNameKey         = "VarDaoClassName"         // dao类名
-	varDaoVariableNameKey      = "VarDaoVariableName"      // dao变量名
-	varDaoPackageNameKey       = "VarDaoPackageName"       // dao包名
-	varDaoPackagePathKey       = "VarDaoPackagePath"       // dao包路径
-	varDaoPrefixNameKey        = "VarDaoPrefixName"        // dao包前缀
-	varCollectionNameKey       = "VarCollectionName"       // 集合名称
-	varAutofillCodeKey         = "VarAutofillCode"         // 自动填充代码
+	varPackagesKey             = "VarPackages"
+	varModelClassNameKey       = "VarModelClassName"
+	varModelPackageNameKey     = "VarModelPackageName"
+	varModelPackagePathKey     = "VarModelPackagePath"
+	varModelVariableNameKey    = "VarModelVariableName"
+	varModelColumnsDefineKey   = "VarModelColumnsDefine"
+	varModelColumnsInstanceKey = "VarModelColumnsInstance"
+	varDaoClassNameKey         = "VarDaoClassName"
+	varDaoVariableNameKey      = "VarDaoVariableName"
+	varDaoPackageNameKey       = "VarDaoPackageName"
+	varDaoPackagePathKey       = "VarDaoPackagePath"
+	varDaoPrefixNameKey        = "VarDaoPrefixName"
+	varCollectionNameKey       = "VarCollectionName"
+	varAutofillCodeKey         = "VarAutofillCode"
 )
 
 const defaultCounterName = "Counter"
 
 type options struct {
-	modelDir      string   // 模型所在目录。必填。
-	modelPkgPath  string   // 模型的包路径。选填，默认为空；不填写则默认根据模块和模型所在目录动态计算得到。
-	modelPkgAlias string   // 模型的包别名。选填，默认为空；不填写则默认使用模型的包名。
-	modelNames    []string // 模型类型名称。
-	daoDir        string   // DAO文件输出目录
-	daoPkgPath    string   // DAO文件输出目录对应的包路径
-	subpkgEnable  bool     // 是否启用子包。
-	subpkgStyle   style    // 子包风格。
-	counterName   string   // 计数器类型名。选填，默认为counter
-	fileNameStyle style    // 文件名风格
+	modelDir      string
+	modelPkgPath  string
+	modelPkgAlias string
+	modelNames    []string
+	daoDir        string
+	daoPkgPath    string
+	subpkgEnable  bool
+	subpkgStyle   style
+	counterName   string
+	fileNameStyle style
 }
 
 type generator struct {
@@ -100,7 +100,7 @@ func (g *generator) makeDao() {
 	}
 }
 
-// 生成内部DAO
+// generate an internal dao file based on model
 func (g *generator) makeModelInternalDao(m *model) {
 	replaces := make(map[string]string)
 	replaces[varModelClassNameKey] = m.modelClassName
@@ -124,7 +124,7 @@ func (g *generator) makeModelInternalDao(m *model) {
 	}
 }
 
-// 生成外部DAO
+// generate an external dao file based on model
 func (g *generator) makeModelExternalDao(m *model) {
 	file := m.daoOutputDir + "/" + m.daoOutputFile
 
@@ -154,7 +154,7 @@ func (g *generator) makeModelExternalDao(m *model) {
 	}
 }
 
-// 生成计数器内部DAO
+// generate an internal dao file based on counter model
 func (g *generator) makeCounterInternalDao() {
 	replaces := make(map[string]string)
 	replaces[varDaoClassNameKey] = g.counter.daoClassName
@@ -171,7 +171,7 @@ func (g *generator) makeCounterInternalDao() {
 	}
 }
 
-// 生成计数器外部DAO
+// generate an external dao file based on counter model
 func (g *generator) makeCounterExternalDao() {
 	file := g.counter.daoOutputDir + "/" + g.counter.daoOutputFile
 
@@ -200,7 +200,7 @@ func (g *generator) makeCounterExternalDao() {
 	}
 }
 
-// 解析模型
+// parse multiple models from the go file
 func (g *generator) parseModels() []*model {
 	var (
 		pkg          = g.loadPackage()
@@ -371,7 +371,6 @@ func (g *generator) parseModels() []*model {
 	return models
 }
 
-// 加载包
 func (g *generator) loadPackage() *packages.Package {
 	cfg := &packages.Config{
 		Mode:  packages.NeedName | packages.NeedFiles | packages.NeedCompiledGoFiles | packages.NeedImports | packages.NeedTypes | packages.NeedTypesSizes | packages.NeedSyntax | packages.NeedTypesInfo | packages.NeedModule,

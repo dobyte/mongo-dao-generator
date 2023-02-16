@@ -8,7 +8,11 @@ import (
 	"strings"
 )
 
-// 自动填充类型
+const (
+	defaultModelPkgAlias     = "models"
+	defaultModelVariableName = "model"
+)
+
 type autoFill int
 
 const (
@@ -28,35 +32,35 @@ const (
 )
 
 type field struct {
-	name              string       // 字段名
-	column            string       // 列名称
-	comment           string       // 字段备注
-	documents         []string     // 顶部注释
-	autoFill          autoFill     // 列自动填充类型
-	autoIncrFieldName string       // 自增字段名
-	autoIncrFieldKind reflect.Kind // 自增字段类型
+	name              string
+	column            string
+	comment           string
+	documents         []string
+	autoFill          autoFill
+	autoIncrFieldName string
+	autoIncrFieldKind reflect.Kind
 }
 
 type model struct {
 	opts               *options
-	fields             []*field          // 模型字段
-	imports            map[string]string // 模型生成dao需要导入的包路径
-	modelName          string            // 模型名
-	modelClassName     string            // 模型类名
-	modelVariableName  string            // 模型变量名
-	modelPkgPath       string            // 模型包路径
-	modelPkgName       string            // 模型包名称
-	daoClassName       string            // DAO类名称
-	daoVariableName    string            // DAO变量名
-	daoPkgPath         string            // DAO包路径
-	daoPkgName         string            // DAO包名称
-	daoOutputDir       string            // DAO文件输出目录
-	daoOutputFile      string            // DAO文件输出名
-	daoPrefixName      string            // DAO前缀名
-	collectionName     string            // 数据库集合名
-	fieldNameMaxLen    int               // 字段名最大长度
-	fieldComplexMaxLen int               // 字段复合最大长度
-	isDependCounter    bool              // 是否依赖于计数器
+	fields             []*field
+	imports            map[string]string
+	modelName          string
+	modelClassName     string
+	modelVariableName  string
+	modelPkgPath       string
+	modelPkgName       string
+	daoClassName       string
+	daoVariableName    string
+	daoPkgPath         string
+	daoPkgName         string
+	daoOutputDir       string
+	daoOutputFile      string
+	daoPrefixName      string
+	collectionName     string
+	fieldNameMaxLen    int
+	fieldComplexMaxLen int
+	isDependCounter    bool
 }
 
 func newModel(opts *options) *model {
@@ -75,7 +79,6 @@ func newModel(opts *options) *model {
 	return m
 }
 
-// 设置模型名
 func (m *model) setModelName(name string) {
 	m.modelName = name
 	m.modelClassName = toPascalCase(m.modelName)
@@ -83,7 +86,7 @@ func (m *model) setModelName(name string) {
 	m.daoClassName = toPascalCase(m.modelName)
 	m.daoVariableName = toCamelCase(m.modelName)
 	m.daoOutputFile = fmt.Sprintf("%s.go", toFileName(m.modelName, m.opts.fileNameStyle))
-	m.collectionName = toUnderScoreCase(m.modelName)
+	m.collectionName = toUnderscoreCase(m.modelName)
 
 	dir := strings.TrimSuffix(m.opts.daoDir, "/")
 
@@ -95,7 +98,6 @@ func (m *model) setModelName(name string) {
 	}
 }
 
-// 设置模型包路径
 func (m *model) setModelPkg(name, path string) {
 	m.modelPkgPath = path
 
@@ -106,9 +108,13 @@ func (m *model) setModelPkg(name, path string) {
 		m.modelPkgName = name
 		m.addImport(m.modelPkgPath)
 	}
+
+	if m.modelPkgName == defaultModelVariableName {
+		m.modelPkgName = defaultModelPkgAlias
+		m.addImport(m.modelPkgPath, m.modelPkgName)
+	}
 }
 
-// 设置DAO包路径
 func (m *model) setDaoPkgPath(path string) {
 	if m.opts.subpkgEnable {
 		m.daoPkgPath = path + "/" + toPackagePath(m.modelName, m.opts.subpkgStyle)
@@ -119,7 +125,6 @@ func (m *model) setDaoPkgPath(path string) {
 	m.daoPkgName = toPackageName(filepath.Base(m.daoPkgPath))
 }
 
-// 添加需要导入的包
 func (m *model) addImport(pkg string, alias ...string) {
 	if len(alias) > 0 {
 		m.imports[pkg] = alias[0]
@@ -128,7 +133,6 @@ func (m *model) addImport(pkg string, alias ...string) {
 	}
 }
 
-// 添加字段
 func (m *model) addFields(fields ...*field) {
 	for _, f := range fields {
 		if l := len(f.name); l > m.fieldNameMaxLen {
@@ -147,7 +151,6 @@ func (m *model) addFields(fields ...*field) {
 	m.fields = append(m.fields, fields...)
 }
 
-// 获取模型列定义
 func (m *model) modelColumnsDefined() (str string) {
 	for i, f := range m.fields {
 		str += fmt.Sprintf("\t%s%s%s %s", f.name, strings.Repeat(" ", m.fieldNameMaxLen-len(f.name)+1), "string", f.comment)
@@ -160,7 +163,6 @@ func (m *model) modelColumnsDefined() (str string) {
 	return
 }
 
-// 获取模型列实例
 func (m *model) modelColumnsInstance() (str string) {
 	for i, f := range m.fields {
 		s := fmt.Sprintf("%s:%s\"%s\",", f.name, strings.Repeat(" ", m.fieldNameMaxLen-len(f.name)+1), f.column)
@@ -175,7 +177,6 @@ func (m *model) modelColumnsInstance() (str string) {
 	return
 }
 
-// 获取要导入的包
 func (m *model) packages() (str string) {
 	packages := make([]string, 0, len(m.imports))
 	for pkg := range m.imports {
@@ -199,7 +200,6 @@ func (m *model) packages() (str string) {
 	return
 }
 
-// 自动填充代码
 func (m *model) autoFillCode() (str string) {
 	var (
 		counterName      = toPascalCase(m.opts.counterName)
