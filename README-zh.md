@@ -24,13 +24,14 @@ mongo-dao-generator是一个自动化生成MongoDB数据访问对象（Data Acce
 
 ### 3.安装
 
-```shell
-go intall github.com/dobyte/mongo-dao-generator
+```bash
+go env -w GOSUMDB=off
+go intall github.com/dobyte/mongo-dao-generator@latest
 ```
 
 ### 4.用法
 
-```shell
+```bash
 Usage of mongo-dao-generator:
     mongo-dao-generator [flags] -model-dir=. -model-names=T,T -dao-dir=./dao
 For more information, see:
