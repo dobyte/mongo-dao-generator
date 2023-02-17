@@ -26,7 +26,7 @@ mongo-dao-generator是一个自动化生成MongoDB数据访问对象（Data Acce
 
 ```bash
 go env -w GOSUMDB=off
-go intall github.com/dobyte/mongo-dao-generator@latest
+go install github.com/dobyte/mongo-dao-generator@latest
 go env -w GOSUMDB=on
 ```
 

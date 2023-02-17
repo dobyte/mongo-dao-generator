@@ -26,7 +26,7 @@ mongo-dao-generator is a tool for automatically generating MongoDB Data Access O
 
 ```bash
 go env -w GOSUMDB=off
-go intall github.com/dobyte/mongo-dao-generator@latest
+go install github.com/dobyte/mongo-dao-generator@latest
 go env -w GOSUMDB=on
 ```
 
