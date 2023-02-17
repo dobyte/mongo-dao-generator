@@ -27,6 +27,7 @@ mongo-dao-generator is a tool for automatically generating MongoDB Data Access O
 ```bash
 go env -w GOSUMDB=off
 go intall github.com/dobyte/mongo-dao-generator@latest
+go env -w GOSUMDB=on
 ```
 
 ### 4.Usage
@@ -111,14 +112,14 @@ dao/internal/mail.go
 package internal
 
 import (
-"context"
-"errors"
-models "github.com/dobyte/mongo-dao-generator/example/model"
-"go.mongodb.org/mongo-driver/bson"
-"go.mongodb.org/mongo-driver/bson/primitive"
-"go.mongodb.org/mongo-driver/mongo"
-"go.mongodb.org/mongo-driver/mongo/options"
-"time"
+    "context"
+    "errors"
+    models "github.com/dobyte/mongo-dao-generator/example/model"
+    "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/bson/primitive"
+    "go.mongodb.org/mongo-driver/mongo"
+    "go.mongodb.org/mongo-driver/mongo/options"
+    "time"
 )
 
 type MailFilterFunc func(cols *MailColumns) interface{}
@@ -170,29 +171,29 @@ func NewMail(db *mongo.Database) *Mail {
 // Count returns the number of documents in the collection.
 func (dao *Mail) Count(ctx context.Context, filterFunc MailFilterFunc, optionsFunc ...MailCountOptionsFunc) (int64, error) {
     var (
-    opts   *options.CountOptions
-    filter = filterFunc(dao.Columns)
+        opts   *options.CountOptions
+        filter = filterFunc(dao.Columns)
     )
 
-if len(optionsFunc) > 0 {
-    opts = optionsFunc[0](dao.Columns)
-}
+    if len(optionsFunc) > 0 {
+        opts = optionsFunc[0](dao.Columns)
+    }
 
-return dao.Collection.CountDocuments(ctx, filter, opts)
+    return dao.Collection.CountDocuments(ctx, filter, opts)
 }
 
 // Aggregate executes an aggregate command against the collection and returns a cursor over the resulting documents.
 func (dao *Mail) Aggregate(ctx context.Context, pipelineFunc MailPipelineFunc, optionsFunc ...MailAggregateOptionsFunc) (*mongo.Cursor, error) {
     var (
-    opts     *options.AggregateOptions
-    pipeline = pipelineFunc(dao.Columns)
+        opts     *options.AggregateOptions
+        pipeline = pipelineFunc(dao.Columns)
     )
 
-if len(optionsFunc) > 0 {
-    opts = optionsFunc[0](dao.Columns)
-}
+    if len(optionsFunc) > 0 {
+        opts = optionsFunc[0](dao.Columns)
+    }
 
-return dao.Collection.Aggregate(ctx, pipeline, opts)
+    return dao.Collection.Aggregate(ctx, pipeline, opts)
 }
 
 // InsertOne executes an insert command to insert a single document into the collection.
@@ -201,17 +202,17 @@ func (dao *Mail) InsertOne(ctx context.Context, model *models.Mail, optionsFunc 
         return nil, errors.New("model is nil")
     }
 
-if err := dao.autofill(ctx, model); err != nil {
-    return nil, err
-}
+    if err := dao.autofill(ctx, model); err != nil {
+        return nil, err
+    }
 
-var opts *options.InsertOneOptions
+    var opts *options.InsertOneOptions
 
-if len(optionsFunc) > 0 {
-    opts = optionsFunc[0](dao.Columns)
-}
+    if len(optionsFunc) > 0 {
+        opts = optionsFunc[0](dao.Columns)
+    }
 
-return dao.Collection.InsertOne(ctx, model, opts)
+    return dao.Collection.InsertOne(ctx, model, opts)
 }
 
 // InsertMany executes an insert command to insert multiple documents into the collection.
@@ -220,37 +221,37 @@ func (dao *Mail) InsertMany(ctx context.Context, models []*models.Mail, optionsF
         return nil, errors.New("models is empty")
     }
 
-documents := make([]interface{}, 0, len(models))
-for i := range models {
-    model := models[i]
-    if err := dao.autofill(ctx, model); err != nil {
-        return nil, err
+    documents := make([]interface{}, 0, len(models))
+    for i := range models {
+        model := models[i]
+        if err := dao.autofill(ctx, model); err != nil {
+            return nil, err
+        }
+        documents = append(documents, model)
     }
-    documents = append(documents, model)
-}
 
-var opts *options.InsertManyOptions
+    var opts *options.InsertManyOptions
 
-if len(optionsFunc) > 0 {
-    opts = optionsFunc[0](dao.Columns)
-}
+    if len(optionsFunc) > 0 {
+        opts = optionsFunc[0](dao.Columns)
+    }
 
-return dao.Collection.InsertMany(ctx, documents, opts)
+    return dao.Collection.InsertMany(ctx, documents, opts)
 }
 
 // UpdateOne executes an update command to update at most one document in the collection.
 func (dao *Mail) UpdateOne(ctx context.Context, filterFunc MailFilterFunc, updateFunc MailUpdateFunc, optionsFunc ...MailUpdateOptionsFunc) (*mongo.UpdateResult, error) {
     var (
-    opts   *options.UpdateOptions
-    filter = filterFunc(dao.Columns)
-    update = updateFunc(dao.Columns)
+        opts   *options.UpdateOptions
+        filter = filterFunc(dao.Columns)
+        update = updateFunc(dao.Columns)
     )
 
-if len(optionsFunc) > 0 {
-    opts = optionsFunc[0](dao.Columns)
-}
+    if len(optionsFunc) > 0 {
+        opts = optionsFunc[0](dao.Columns)
+    }
 
-return dao.Collection.UpdateOne(ctx, filter, update, opts)
+    return dao.Collection.UpdateOne(ctx, filter, update, opts)
 }
 
 // UpdateOneByID executes an update command to update at most one document in the collection.
@@ -260,47 +261,47 @@ func (dao *Mail) UpdateOneByID(ctx context.Context, id string, updateFunc MailUp
         return nil, err
     }
 
-return dao.UpdateOne(ctx, func(cols *MailColumns) interface{} {
-    return bson.M{"_id": objectID}
-}, updateFunc, optionsFunc...)
+    return dao.UpdateOne(ctx, func(cols *MailColumns) interface{} {
+        return bson.M{"_id": objectID}
+    }, updateFunc, optionsFunc...)
 }
 
 // UpdateMany executes an update command to update documents in the collection.
 func (dao *Mail) UpdateMany(ctx context.Context, filterFunc MailFilterFunc, updateFunc MailUpdateFunc, optionsFunc ...MailUpdateOptionsFunc) (*mongo.UpdateResult, error) {
     var (
-    opts   *options.UpdateOptions
-    filter = filterFunc(dao.Columns)
-    update = updateFunc(dao.Columns)
+        opts   *options.UpdateOptions
+        filter = filterFunc(dao.Columns)
+        update = updateFunc(dao.Columns)
     )
 
-if len(optionsFunc) > 0 {
-    opts = optionsFunc[0](dao.Columns)
-}
+    if len(optionsFunc) > 0 {
+        opts = optionsFunc[0](dao.Columns)
+    }
 
-return dao.Collection.UpdateMany(ctx, filter, update, opts)
+    return dao.Collection.UpdateMany(ctx, filter, update, opts)
 }
 
 // FindOne executes a find command and returns a model for one document in the collection.
 func (dao *Mail) FindOne(ctx context.Context, filterFunc MailFilterFunc, optionsFunc ...MailFindOneOptionsFunc) (*models.Mail, error) {
     var (
-    opts   *options.FindOneOptions
-    model  = &models.Mail{}
-    filter = filterFunc(dao.Columns)
+        opts   *options.FindOneOptions
+        model  = &models.Mail{}
+        filter = filterFunc(dao.Columns)
     )
 
-if len(optionsFunc) > 0 {
-    opts = optionsFunc[0](dao.Columns)
-}
-
-err := dao.Collection.FindOne(ctx, filter, opts).Decode(model)
-if err != nil {
-    if err == mongo.ErrNoDocuments {
-        return nil, nil
+    if len(optionsFunc) > 0 {
+        opts = optionsFunc[0](dao.Columns)
     }
-    return nil, err
-}
 
-return model, nil
+    err := dao.Collection.FindOne(ctx, filter, opts).Decode(model)
+    if err != nil {
+        if err == mongo.ErrNoDocuments {
+            return nil, nil
+        }
+        return nil, err
+    }
+
+    return model, nil
 }
 
 // FindOneByID executes a find command and returns a model for one document in the collection.
@@ -310,34 +311,34 @@ func (dao *Mail) FindOneByID(ctx context.Context, id string, optionsFunc ...Mail
         return nil, err
     }
 
-return dao.FindOne(ctx, func(cols *MailColumns) interface{} {
-    return bson.M{"_id": objectID}
-}, optionsFunc...)
+    return dao.FindOne(ctx, func(cols *MailColumns) interface{} {
+        return bson.M{"_id": objectID}
+    }, optionsFunc...)
 }
 
 // FindMany executes a find command and returns many models the matching documents in the collection.
 func (dao *Mail) FindMany(ctx context.Context, filterFunc MailFilterFunc, optionsFunc ...MailFindManyOptionsFunc) ([]*models.Mail, error) {
     var (
-    opts   *options.FindOptions
-    filter = filterFunc(dao.Columns)
+        opts   *options.FindOptions
+        filter = filterFunc(dao.Columns)
     )
 
-if len(optionsFunc) > 0 {
-    opts = optionsFunc[0](dao.Columns)
-}
+    if len(optionsFunc) > 0 {
+        opts = optionsFunc[0](dao.Columns)
+    }
 
-cur, err := dao.Collection.Find(ctx, filter, opts)
-if err != nil {
-    return nil, err
-}
+    cur, err := dao.Collection.Find(ctx, filter, opts)
+    if err != nil {
+        return nil, err
+    }
 
-models := make([]*models.Mail, 0)
+    models := make([]*models.Mail, 0)
 
-if err = cur.All(ctx, &models); err != nil {
-    return nil, err
-}
+    if err = cur.All(ctx, &models); err != nil {
+        return nil, err
+    }
 
-return models, nil
+    return models, nil
 }
 
 // DeleteOne executes a delete command to delete at most one document from the collection.
@@ -347,11 +348,11 @@ func (dao *Mail) DeleteOne(ctx context.Context, filterFunc MailFilterFunc, optio
     filter = filterFunc(dao.Columns)
     )
 
-if len(optionsFunc) > 0 {
-    opts = optionsFunc[0](dao.Columns)
-}
+    if len(optionsFunc) > 0 {
+        opts = optionsFunc[0](dao.Columns)
+    }
 
-return dao.Collection.DeleteOne(ctx, filter, opts)
+    return dao.Collection.DeleteOne(ctx, filter, opts)
 }
 
 // DeleteOneByID executes a delete command to delete at most one document from the collection.
@@ -361,9 +362,9 @@ func (dao *Mail) DeleteOneByID(ctx context.Context, id string, optionsFunc ...Ma
         return nil, err
     }
 
-return dao.DeleteOne(ctx, func(cols *MailColumns) interface{} {
-    return bson.M{"_id": objectID}
-}, optionsFunc...)
+    return dao.DeleteOne(ctx, func(cols *MailColumns) interface{} {
+        return bson.M{"_id": objectID}
+    }, optionsFunc...)
 }
 
 // DeleteMany executes a delete command to delete documents from the collection.
@@ -373,11 +374,11 @@ func (dao *Mail) DeleteMany(ctx context.Context, filterFunc MailFilterFunc, opti
     filter = filterFunc(dao.Columns)
     )
 
-if len(optionsFunc) > 0 {
-    opts = optionsFunc[0](dao.Columns)
-}
+    if len(optionsFunc) > 0 {
+        opts = optionsFunc[0](dao.Columns)
+    }
 
-return dao.Collection.DeleteMany(ctx, filter, opts)
+    return dao.Collection.DeleteMany(ctx, filter, opts)
 }
 
 // autofill when inserting data
@@ -386,11 +387,11 @@ func (dao *Mail) autofill(ctx context.Context, model *models.Mail) error {
         model.ID = primitive.NewObjectID()
     }
 
-if model.SendTime == 0 {
-    model.SendTime = primitive.NewDateTimeFromTime(time.Now())
-}
+    if model.SendTime == 0 {
+        model.SendTime = primitive.NewDateTimeFromTime(time.Now())
+    }
 
-return nil
+    return nil
 }
 ```
 
@@ -400,8 +401,8 @@ dao/mail.go
 package dao
 
 import (
-"github.com/dobyte/mongo-dao-generator/example/dao/internal"
-"go.mongodb.org/mongo-driver/mongo"
+    "github.com/dobyte/mongo-dao-generator/example/dao/internal"
+    "go.mongodb.org/mongo-driver/mongo"
 )
 
 type MailColumns = internal.MailColumns
@@ -421,15 +422,15 @@ func NewMail(db *mongo.Database) *Mail {
 package main
 
 import (
-"context"
-"github.com/dobyte/mongo-dao-generator/example/dao"
-"github.com/dobyte/mongo-dao-generator/example/model"
-"go.mongodb.org/mongo-driver/bson"
-"go.mongodb.org/mongo-driver/mongo"
-"go.mongodb.org/mongo-driver/mongo/options"
-"go.mongodb.org/mongo-driver/mongo/readpref"
-"log"
-"time"
+    "context"
+    "github.com/dobyte/mongo-dao-generator/example/dao"
+    "github.com/dobyte/mongo-dao-generator/example/model"
+    "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/mongo"
+    "go.mongodb.org/mongo-driver/mongo/options"
+    "go.mongodb.org/mongo-driver/mongo/readpref"
+    "log"
+    "time"
 )
 
 func main() {
@@ -439,44 +440,44 @@ func main() {
     baseCtx = context.Background()
     )
 
-ctx, cancel := context.WithTimeout(baseCtx, 5*time.Second)
-client, err := mongo.Connect(ctx, opts)
-cancel()
-if err != nil {
-    log.Fatalf("connect mongo server failed: %v", err)
-}
+    ctx, cancel := context.WithTimeout(baseCtx, 5*time.Second)
+    client, err := mongo.Connect(ctx, opts)
+    cancel()
+    if err != nil {
+        log.Fatalf("connect mongo server failed: %v", err)
+    }
 
-ctx, cancel = context.WithTimeout(baseCtx, 5*time.Second)
-defer cancel()
-err = client.Ping(ctx, readpref.Primary())
-cancel()
-if err != nil {
-    log.Fatalf("ping mongo server failed: %v", err)
-}
+    ctx, cancel = context.WithTimeout(baseCtx, 5*time.Second)
+    defer cancel()
+    err = client.Ping(ctx, readpref.Primary())
+    cancel()
+    if err != nil {
+        log.Fatalf("ping mongo server failed: %v", err)
+    }
 
-db := client.Database("dao_test")
+    db := client.Database("dao_test")
 
-mailDao := dao.NewMail(db)
+    mailDao := dao.NewMail(db)
 
-_, err = mailDao.InsertOne(baseCtx, &model.Mail{
-    Title:    "mongo-dao-generator introduction",
-    Content:  "the mongo-dao-generator is a tool for automatically generating MongoDB Data Access Object.",
-    Sender:   1,
-    Receiver: 2,
-    Status:   1,
-})
-if err != nil {
-    log.Fatalf("failed to insert into mongo database: %v", err)
-}
+    _, err = mailDao.InsertOne(baseCtx, &model.Mail{
+        Title:    "mongo-dao-generator introduction",
+        Content:  "the mongo-dao-generator is a tool for automatically generating MongoDB Data Access Object.",
+        Sender:   1,
+        Receiver: 2,
+        Status:   1,
+    })
+    if err != nil {
+        log.Fatalf("failed to insert into mongo database: %v", err)
+    }
 
-mail, err := mailDao.FindOne(baseCtx, func(cols *dao.MailColumns) interface{} {
-    return bson.M{cols.Receiver: 2}
-})
-if err != nil {
-    log.Fatalf("failed to find a row of data from mongo database: %v", err)
-}
+    mail, err := mailDao.FindOne(baseCtx, func(cols *dao.MailColumns) interface{} {
+        return bson.M{cols.Receiver: 2}
+    })
+    if err != nil {
+        log.Fatalf("failed to find a row of data from mongo database: %v", err)
+    }
 
-log.Printf("%+v", mail)
+    log.Printf("%+v", mail)
 }
 ```
 
