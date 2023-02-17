@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	defaultModelPkgAlias     = "models"
+	defaultModelPkgAlias     = "modelpkg"
 	defaultModelVariableName = "model"
 )
 
