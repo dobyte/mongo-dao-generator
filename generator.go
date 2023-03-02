@@ -218,6 +218,8 @@ func (g *generator) parseModels() []*model {
 		daoPkgPath = pkg.Module.Path + outPath[len(pkg.Module.Dir):]
 	}
 
+	daoPkgPath = strings.ReplaceAll(daoPkgPath, `\`, `/`)
+
 	g.counter.setDaoPkgPath(daoPkgPath)
 
 	for _, file := range pkg.Syntax {
@@ -226,6 +228,7 @@ func (g *generator) parseModels() []*model {
 			modelPkgPath = pkg.Module.Path + filePath[len(pkg.Module.Dir):]
 		}
 
+		modelPkgPath = strings.ReplaceAll(modelPkgPath, `\`, `/`)
 		modelPkgName = file.Name.Name
 
 		ast.Inspect(file, func(node ast.Node) bool {
