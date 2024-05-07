@@ -90,8 +90,8 @@ func (m *model) setModelName(name string) {
 
 	dir := strings.TrimSuffix(m.opts.daoDir, "/")
 
-	if m.opts.subpkgEnable {
-		m.daoOutputDir = dir + "/" + toPackagePath(m.modelName, m.opts.subpkgStyle)
+	if m.opts.subPkgEnable {
+		m.daoOutputDir = dir + "/" + toPackagePath(m.modelName, m.opts.subPkgStyle)
 	} else {
 		m.daoOutputDir = dir
 		m.daoPrefixName = toPascalCase(m.modelName)
@@ -116,8 +116,8 @@ func (m *model) setModelPkg(name, path string) {
 }
 
 func (m *model) setDaoPkgPath(path string) {
-	if m.opts.subpkgEnable {
-		m.daoPkgPath = path + "/" + toPackagePath(m.modelName, m.opts.subpkgStyle)
+	if m.opts.subPkgEnable {
+		m.daoPkgPath = path + "/" + toPackagePath(m.modelName, m.opts.subPkgStyle)
 	} else {
 		m.daoPkgPath = path
 	}
@@ -206,7 +206,7 @@ func (m *model) autoFillCode() (str string) {
 		counterPkgPrefix string
 	)
 
-	if m.opts.subpkgEnable {
+	if m.opts.subPkgEnable {
 		counterPkgPrefix = fmt.Sprintf("%s.", toPackageName(counterName))
 	}
 

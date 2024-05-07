@@ -47,8 +47,8 @@ type options struct {
 	modelNames    []string
 	daoDir        string
 	daoPkgPath    string
-	subpkgEnable  bool
-	subpkgStyle   style
+	subPkgEnable  bool
+	subPkgStyle   style
 	counterName   string
 	fileNameStyle style
 }
@@ -89,6 +89,8 @@ func (g *generator) makeDao() {
 		g.makeModelInternalDao(m)
 
 		g.makeModelExternalDao(m)
+
+		fmt.Printf("%s's dao file generated successfully\n", m.modelName)
 
 		if !m.isDependCounter {
 			continue
@@ -318,7 +320,7 @@ func (g *generator) parseModels() []*model {
 										field.autoFill = autoIncr
 										field.autoIncrFieldName = eles[1]
 
-										if g.opts.subpkgEnable {
+										if g.opts.subPkgEnable {
 											model.addImport(g.counter.daoPkgPath)
 										}
 

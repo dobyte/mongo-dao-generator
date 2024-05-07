@@ -30,8 +30,8 @@ func newCounter(opts *options) *counter {
 
 	dir := strings.TrimSuffix(opts.daoDir, "/")
 
-	if opts.subpkgEnable {
-		c.daoOutputDir = dir + "/" + toPackagePath(c.modelName, c.opts.subpkgStyle)
+	if opts.subPkgEnable {
+		c.daoOutputDir = dir + "/" + toPackagePath(c.modelName, c.opts.subPkgStyle)
 	} else {
 		c.daoOutputDir = dir
 		c.daoPrefixName = toPascalCase(c.modelName)
@@ -41,8 +41,8 @@ func newCounter(opts *options) *counter {
 }
 
 func (c *counter) setDaoPkgPath(path string) {
-	if c.opts.subpkgEnable {
-		c.daoPkgPath = path + "/" + toPackagePath(c.modelName, c.opts.subpkgStyle)
+	if c.opts.subPkgEnable {
+		c.daoPkgPath = path + "/" + toPackagePath(c.modelName, c.opts.subPkgStyle)
 	} else {
 		c.daoPkgPath = path
 	}

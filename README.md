@@ -54,9 +54,9 @@ Flags:
         specify a model package alias; default no alias
   -model-pkg-path string
         specify the package path corresponding to the model directory; automatically calculated by default
-  -subpkg-enable
+  -sub-pkg-enable
         specify whether to enable subpkg; default disable
-  -subpkg-style string
+  -sub-pkg-style string
         specify the generation style for subpkg; options: kebab | underscore | lower | camel | pascal; default is kebab (default "kebab")
 ```
 
